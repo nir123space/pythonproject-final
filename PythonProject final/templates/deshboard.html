@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - BikeService Pro{% endblock %}
+
+{% block content %}
+<section class="dashboard">
+    <div class="container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="welcome-section">
+                <h1>Welcome, {{ user.name }}!</h1>
+                <p>Manage your bikes and service bookings</p>
+            </div>
+            <a href="{{ url_for('book_service') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Book New Service
+            </a>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon bg-blue">
+                    <i class="fas fa-motorcycle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ bikes|length }}</h3>
+                    <p>Registered Bikes</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-green">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ bookings|length }}</h3>
+                    <p>Total Bookings</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-orange">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ bookings|selectattr('status', 'equalto', 'Pending')|list|length }}</h3>
+                    <p>Pending Services</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-purple">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ bookings|selectattr('status', 'equalto', 'Completed')|list|length }}</h3>
+                    <p>Completed Services</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- My Bikes Section -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-motorcycle"></i> My Bikes</h2>
+                    <button class="btn btn-sm btn-outline" onclick="toggleModal('addBikeModal')">
+                        <i class="fas fa-plus"></i> Add Bike
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if bikes %}
+                        <div class="bikes-list">
+                            {% for bike in bikes %}
+                            <div class="bike-item">
+                                <div class="bike-icon">
+                                    <i class="fas fa-motorcycle"></i>
+                                </div>
+                                <div class="bike-details">
+                                    <h4>{{ bike.brand }} {{ bike.model }}</h4>
+                                    <p>
+                                        {% if bike.year %}Year: {{ bike.year }} | {% endif %}
+                                        {% if bike.registration_number %}Reg: {{ bike.registration_number }}{% endif %}
+                                    </p>
+                                </div>
+                                <form action="{{ url_for('delete_bike', bike_id=bike.id) }}" method="POST" class="bike-actions">
+                                    <button type="submit" class="btn-icon btn-danger" onclick="return confirm('Delete this bike?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-motorcycle"></i>
+                            <p>No bikes registered yet</p>
+                            <button class="btn btn-primary btn-sm" onclick="toggleModal('addBikeModal')">Add Your First Bike</button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Bookings Section -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-calendar-alt"></i> Recent Bookings</h2>
+                </div>
+                <div class="card-body">
+                    {% if bookings %}
+                        <div class="bookings-list">
+                            {% for booking in bookings %}
+                            <div class="booking-item">
+                                <div class="booking-status status-{{ booking.status|lower }}">
+                                    {% if booking.status == 'Pending' %}
+                                        <i class="fas fa-clock"></i>
+                                    {% elif booking.status == 'Completed' %}
+                                        <i class="fas fa-check"></i>
+                                    {% elif booking.status == 'Cancelled' %}
+                                        <i class="fas fa-times"></i>
+                                    {% else %}
+                                        <i class="fas fa-spinner"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="booking-details">
+                                    <h4>{{ booking.service_name }}</h4>
+                                    <p>{{ booking.brand }} {{ booking.model }}</p>
+                                    <span class="booking-date">
+                                        <i class="fas fa-calendar"></i> {{ booking.booking_date }} at {{ booking.booking_time }}
+                                    </span>
+                                </div>
+                                <div class="booking-price">
+                                    <span>₹{{ "%.0f"|format(booking.price) }}</span>
+                                    <span class="status-badge badge-{{ booking.status|lower }}">{{ booking.status }}</span>
+                                </div>
+                                {% if booking.status == 'Pending' %}
+                                <form action="{{ url_for('cancel_booking', booking_id=booking.id) }}" method="POST">
+                                    <button type="submit" class="btn-icon btn-danger" onclick="return confirm('Cancel this booking?')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-times"></i>
+                            <p>No bookings yet</p>
+                            <a href="{{ url_for('book_service') }}" class="btn btn-primary btn-sm">Book Your First Service</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Add Bike Modal -->
+<div class="modal" id="addBikeModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-motorcycle"></i> Add New Bike</h3>
+            <button class="modal-close" onclick="toggleModal('addBikeModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('add_bike') }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="brand">Brand *</label>
+                    <input type="text" id="brand" name="brand" required placeholder="e.g., Honda, Yamaha, Royal Enfield">
+                </div>
+                <div class="form-group">
+                    <label for="model">Model *</label>
+                    <input type="text" id="model" name="model" required placeholder="e.g., Activa, FZ, Classic 350">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <input type="number" id="year" name="year" placeholder="e.g., 2022" min="1990" max="2025">
+                    </div>
+                    <div class="form-group">
+                        <label for="registration_number">Registration Number</label>
+                        <input type="text" id="registration_number" name="registration_number" placeholder="e.g., MH12AB1234">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="toggleModal('addBikeModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Bike</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

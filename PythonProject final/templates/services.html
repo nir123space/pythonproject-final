@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Our Services - BikeService Pro{% endblock %}
+
+{% block content %}
+<section class="services-page">
+    <div class="container">
+        <div class="page-header">
+            <h1>Our Services</h1>
+            <p>Comprehensive bike care services to keep you riding smoothly</p>
+        </div>
+
+        {% for category, services in categorized_services.items() %}
+        <div class="service-category">
+            <h2 class="category-title">
+                {% if category == 'Maintenance' %}
+                    <i class="fas fa-wrench"></i>
+                {% elif category == 'Safety' %}
+                    <i class="fas fa-shield-alt"></i>
+                {% elif category == 'Performance' %}
+                    <i class="fas fa-tachometer-alt"></i>
+                {% elif category == 'Electrical' %}
+                    <i class="fas fa-bolt"></i>
+                {% elif category == 'Cleaning' %}
+                    <i class="fas fa-spray-can"></i>
+                {% elif category == 'Tires' %}
+                    <i class="fas fa-circle"></i>
+                {% elif category == 'Repair' %}
+                    <i class="fas fa-tools"></i>
+                {% else %}
+                    <i class="fas fa-cog"></i>
+                {% endif %}
+                {{ category }}
+            </h2>
+            <div class="services-grid">
+                {% for service in services %}
+                <div class="service-card-detailed">
+                    <div class="service-header">
+                        <h3>{{ service.name }}</h3>
+                        <span class="service-category-badge">{{ service.category }}</span>
+                    </div>
+                    <p class="service-description">{{ service.description }}</p>
+                    <div class="service-footer">
+                        <div class="service-info">
+                            <span class="price">₹{{ "%.0f"|format(service.price) }}</span>
+                            <span class="duration"><i class="fas fa-clock"></i> {{ service.duration }}</span>
+                        </div>
+                        <a href="{{ url_for('book_service', service_id=service.id) }}" class="btn btn-primary">
+                            Book Now
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
